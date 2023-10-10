@@ -1,0 +1,19 @@
+FROM cameronbrunner/tinycorelinux-extensions:latest
+
+ENV LANG=C.UTF-8 LC_ALL=C
+
+RUN tce-load -wi gcc.tcz
+RUN tce-load -wi compiletc.tcz
+
+USER root
+
+WORKDIR /tmp
+COPY hiredis-1.0.0/ /tmp/hiredis-1.0.0/
+WORKDIR /tmp/hiredis-1.0.0
+RUN make
+RUN make install
+
+WORKDIR /src
+
+ADD main.c /src/main.c 
+RUN gcc -Wl,-z,norelro -g -fno-stack-protector -O0 -z execstack -o main main.c -pthread -static-libgcc -Wl,-Bstatic -lhiredis -Wl,-Bdynamic
