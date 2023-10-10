@@ -13,7 +13,7 @@ Coming...
 | **[bilety](services/bilety/)** | Rust | [Checker](checkers/bilety/) | [Sploits](sploits/bilety/) | [@enmex](https://github.com/enmex) |
 | **[zapiski](services/zapiski/)** | C++ | [Checker](checkers/zapiski/) | [Sploits](sploits/zapiski/) | [@pc-rockefeller](https://github.com/pc-rockefeller) |
 | **[cryptodurka](services/cryptodurka/)** | Go | [Checker](checkers/cryptodurka/) | [Sploits](sploits/cryptodurka/) | [@gusyaross](https://github.com/gusyaross) |
-| **[service_4](services/service_4/)** | N/A | [Checker](checkers/service_4/) | [Sploits](sploits/service_4/) | [@](https://github.com/lucky624) |
+| **[krasnyj_oktyabr](services/krasnyj_oktyabr/)** | C | [Checker](checkers/krasnyj_oktyabr/) | [Sploits](sploits/krasnyj_oktyabr/) | [lucky624](https://github.com/lucky624) |
 
 
 ## Infrastructure
