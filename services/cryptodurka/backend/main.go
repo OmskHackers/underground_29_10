@@ -1,28 +1,30 @@
 package main
 
 import (
-	"fmt"
-	"net/http"
+	"backend/controllers"
+	"backend/initializers"
+	"backend/routes"
 
 	"github.com/gin-gonic/gin"
 )
 
-func test(c *gin.Context) {
-	login := c.PostForm("login")
-	password := c.PostForm("password")
+var (
+	server              *gin.Engine
+	AuthController      controllers.AuthController
+	AuthRouteController routes.AuthRouteController
+)
 
-	fmt.Println(login, password)
+func init() {
+	initializers.ConnectDB()
 
-	c.JSON(http.StatusOK, gin.H{
-		"Login":    login,
-		"Password": password,
-	})
+	AuthController = controllers.NewAuthController(initializers.DB)
+	AuthRouteController = routes.NewAuthRouteController(AuthController)
+
+	server = gin.Default()
 }
 
 func main() {
-	router := gin.Default()
-
-	router.POST("/api/test", test)
-
-	router.Run(":8081")
+	router := server.Group("/api")
+	AuthRouteController.AuthRoute(router)
+	server.Run(":8081")
 }
