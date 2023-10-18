@@ -1,8 +1,4 @@
-use std::fmt::format;
-
-use crate::{services::auth_service::AuthService, models::error::ClientError};
-use crate::services::flight_service::FlightService;
-use crate::menu::transaction::Transaction;
+use crate::{menu::transaction::Transaction, services::auth_service::AuthService};
 
 #[derive(Clone)]
 pub enum MenuTransaction {
@@ -11,22 +7,22 @@ pub enum MenuTransaction {
     Exit,
 }
 
+#[derive(Clone)]
 pub struct MenuItem {
     pub title: String,
     pub output: MenuTransaction,
 }
 
+#[derive(Clone)]
 pub struct Menu {
-    auth_service: AuthService,
-    flight_service: FlightService,
+    
     items: Vec<MenuItem>,
 }
 
 impl Menu {
     pub fn new() -> Self {
         let mut items = Vec::new();
-        let auth_service = AuthService::new();
-        let flight_service = FlightService::new();
+
         items.push(MenuItem { 
             title: ("Список прибывающих рейсов".to_owned()), 
             output: {MenuTransaction::Output("Хз мне пох".to_string())} }
@@ -39,7 +35,13 @@ impl Menu {
             title: ("Войти в систему".to_owned()), 
             output: (
                 MenuTransaction::Input(Transaction::new(
-                    vec!["входное имя".to_string(), "секретный ключ".to_string()]
+                    vec!["входное имя".to_string(), "секретный ключ".to_string()],
+                    |req| {
+                        let user_data = req.get_user_data();
+                        let username = user_data[0].clone();
+                        let password = user_data[1].clone();
+                        AuthService::login(username, password)
+                    }
                 )))
             }
         );
@@ -47,7 +49,13 @@ impl Menu {
             title: ("Зарегистрироваться в системе".to_owned()), 
             output: (
                 MenuTransaction::Input(Transaction::new(
-                    vec!["входное имя".to_string(), "секретный ключ".to_string()]
+                    vec!["входное имя".to_string(), "секретный ключ".to_string()],
+                    |req| {
+                        let user_data = req.get_user_data();
+                        let username = user_data[0].clone();
+                        let password = user_data[1].clone();
+                        AuthService::register(username, password)
+                    }
                 ))
             ) 
             }
@@ -79,18 +87,27 @@ impl Menu {
             "#.to_string())) }
         );
         items.push(MenuItem { 
+            title: ("Инструкция по использованию".to_owned()), 
+            output: (MenuTransaction::Output(r#"
+    Для того, чтобы заказать билет в космическое пространство, необходимо провести процедуру регистрации или,
+если вы ранее регистрировались в службе 'Космос-150', то необходимо войти в систему, используя секретный ключ и Ваше входное имя.
+Далее выбираете пункт назначения (например, созвездие Кассиопея, Шеддар), выбираете дату (например, 12 Ленина), время (9:30). 
+Готово! Информация о Вашем заказе зафиксирована в системе. С Вашей стороны остается явиться по адресу Москва, ул. Революции, 8 (ст. Планетарная в метро, красная ветка)
+и получить билет на космолёт. Счастливого полёта!
+            "#.to_string())) }
+        );
+        items.push(MenuItem { 
             title: ("Выйти".to_owned()), 
             output: (MenuTransaction::Exit) }
         );
 
         Menu {
-            auth_service,
-            flight_service,
             items
         }
     }
     pub fn display_menu(&self) -> String {
         let mut menu = String::new();
+        menu.push_str("\n");
         for i in 0..self.items.len() {
             menu.push_str(format!("> {idx}: {title}\n", idx=i+1, title=self.items[i].title).as_str());
         }
@@ -101,30 +118,6 @@ impl Menu {
             Ok(self.items[selected_item - 1].output.clone())
         } else {
             Err("Invalid selected item".to_string())
-        }
-    }
-    pub fn commit(&self, selected: usize, user_inputs: Vec<String>) -> String {
-        let res: Result<String, ClientError>;
-        
-        match selected {
-            3 => {
-                let username = user_inputs[0].clone();
-                let password = user_inputs[1].clone();
-                res = self.auth_service.login(username, password)
-            }
-            4 => {
-                let username = user_inputs[0].clone();
-                let password = user_inputs[1].clone();
-                res = self.auth_service.register(username, password)
-            }
-            _ => {
-                res = Ok("".to_string())
-            }
-        }
-
-        match res {
-            Ok(output)=> output,
-            Err(err) => format!("ОШИБКА СО СТОРОНЫ ПОЛЬЗОВАТЕЛЯ: {:?}", err)
         }
     }
 }

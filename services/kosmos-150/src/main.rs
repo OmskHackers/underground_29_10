@@ -1,3 +1,6 @@
+use std::sync::Arc;
+
+use kosmos150::pkg::db::{self};
 use tokio::net::TcpListener;
 
 use kosmos150::menu::menu::Menu;
@@ -46,18 +49,22 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
 "#, date_time.get_current_date());
 
-    let listener = TcpListener::bind("0.0.0.0:8080").await?;
+    let listener = TcpListener::bind("0.0.0.0:2067").await?;
+    db::init();
 
+    let menu_arc = Arc::new(Menu::new());
+
+    println!("server has been started, ready to accept connections");
     loop {
         let (socket, _) = listener.accept().await?;
-
         let art_clone = art.clone();
+
+        let menu_arc_clone = menu_arc.clone();
 
         tokio::spawn(async move {
             let mut session = Session::new(socket);
 
-            let menu = Menu::new();
-            let greet_message = format!("{}{}", art_clone, menu.display_menu());
+            let greet_message = format!("{}{}", art_clone, menu_arc_clone.display_menu());
 
             if let Some(err) = session.write(greet_message).await {
                 eprintln!("failed to write to socket; err = {:?}", err);
@@ -70,7 +77,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let res: Result<usize, std::num::ParseIntError> = user_input.parse::<usize>();
                         match res {
                             Ok(selected)=> {
-                                match menu.display_selected(selected) {
+                                match menu_arc_clone.display_selected(selected) {
                                     Ok(tr)=> {
                                         match tr {
                                             Output(msg)=> {
@@ -95,14 +102,17 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                                                         }
                                                     }
                                                 }
-                                                if let Some(err) = session.write(menu.commit(selected, transaction.get_user_inputs())).await {
+                                                if let Some(err) = session.write(transaction.commit()).await {
                                                     eprintln!("failed to write to socket; err = {:?}", err);
                                                     return;
                                                 }
                                             }
                                             Exit => {
-                                                if let Some(err) = session.write("Слава алгоритмам и науке СССР! До следующей виртуального встречи, товарищ!".to_string()).await {
+                                                if let Some(err) = session.write("Слава алгоритмам и науке СССР! До следующей виртуального встречи, товарищ!\n".to_string()).await {
                                                     eprintln!("failed to write to socket; err = {:?}", err);
+                                                }
+                                                if let Some(err) = session.close().await {
+                                                    eprintln!("failed to close connection; err = {:?}", err);
                                                 }
                                                 return;
                                             }
@@ -131,7 +141,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         return;
                     }
                 }
-                if let Some(err) = session.write(menu.display_menu()).await {
+                if let Some(err) = session.write(menu_arc_clone.display_menu()).await {
                     eprintln!("failed to write to socket; err = {:?}", err);
                     return;
                 }

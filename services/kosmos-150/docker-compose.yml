@@ -1,0 +1,41 @@
+version: '3.9'
+volumes:
+  postgres_data:
+
+services:
+  app:
+    container_name: app
+    ports:
+      - 2067:2067
+    depends_on:
+      - db
+    env_file:
+      - .env
+    build: .
+    networks:
+      - kosmos150_network
+
+  db:
+    container_name: db
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: kosmos150_db
+      POSTGRES_USER: brezhnev
+      POSTGRES_PASSWORD: glory_to_ussr_69_272
+      PGPORT: 5432
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U brezhnev -d kosmos150_db']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    networks:
+      kosmos150_network:
+        aliases:
+          - kosmos150.db.loc
+
+networks:
+  kosmos150_network:

@@ -9,9 +9,7 @@ pub mod services {
 }
 
 pub mod models {
-    pub mod flight;
-    pub mod user;
-    pub mod error;
+    pub mod models;
 }
 
 pub mod network {
@@ -21,3 +19,10 @@ pub mod network {
 pub mod utils {
     pub mod date;
 }
+
+pub mod pkg {
+    pub mod db;
+}
+
+pub mod schema;
+pub mod error;
