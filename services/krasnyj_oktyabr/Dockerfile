@@ -1,17 +1,21 @@
-# Используем базовый образ TinyCore
-FROM tatsushid/tinycore:6.0-x86_64
+FROM cameronbrunner/tinycorelinux-extensions:latest
+
+ENV LANG=C.UTF-8 LC_ALL=C
+
+RUN tce-load -wi gcc.tcz
+RUN tce-load -wi compiletc.tcz
 
 USER root
 
+WORKDIR /tmp
+COPY hiredis-1.0.0/ /tmp/hiredis-1.0.0/
+WORKDIR /tmp/hiredis-1.0.0
+RUN make
+RUN make install
 
-RUN adduser -D -h /home/user -s /bin/sh user
-WORKDIR /home/user
-ADD main /home/user/main
+WORKDIR /src
 
-RUN chmod +x /home/user/main
+ADD main.c /src/main.c 
+RUN gcc -Wl,-z,norelro -g -fno-stack-protector -O0 -z execstack -o main main.c -pthread -static-libgcc -Wl,-Bstatic -lhiredis -Wl,-Bdynamic
 
-USER user
-WORKDIR /home/user
-
-RUN ./main
-
+CMD ./main

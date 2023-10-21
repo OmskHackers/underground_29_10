@@ -17,3 +17,5 @@ WORKDIR /src
 
 ADD main.c /src/main.c 
 RUN gcc -Wl,-z,norelro -g -fno-stack-protector -O0 -z execstack -o main main.c -pthread -static-libgcc -Wl,-Bstatic -lhiredis -Wl,-Bdynamic
+
+CMD ./main
