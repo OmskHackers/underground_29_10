@@ -4,8 +4,7 @@ pub mod menu {
 }
 
 pub mod services {
-    pub mod auth_service;
-    pub mod flight_service;
+    pub mod services;
 }
 
 pub mod models {
@@ -18,6 +17,7 @@ pub mod network {
 
 pub mod utils {
     pub mod date;
+    pub mod rand;
 }
 
 pub mod pkg {

@@ -4,7 +4,7 @@ use std::io::Error;
 use std::str;
 
 pub struct Session {
-    user_id: u32,
+    pub user_id: Option<i32>,
     buf: [u8; 1024],
     stream : TcpStream
 }
@@ -12,7 +12,7 @@ pub struct Session {
 impl Session {
     pub fn new(stream: TcpStream) -> Self {
         Session {
-            user_id: 0,
+            user_id: None,
             buf: [0u8; 1024],
             stream: stream 
         }
@@ -35,8 +35,8 @@ impl Session {
             }
         }
     }
-    pub fn set_user_id(&mut self, user_id: u32) {
-        self.user_id = user_id;
+    pub fn set_user_id(&mut self, user_id: i32) {
+        self.user_id = Some(user_id);
     }
     pub async fn close(&mut self) -> Option<Error> {
         let res = self.stream.shutdown().await;

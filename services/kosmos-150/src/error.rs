@@ -2,51 +2,26 @@ use std::error;
 use std::fmt;
 
 #[derive(Debug, Clone)]
-pub struct ClientError {
+pub struct AppError {
     message: String
 }
 
-impl ClientError {
+impl AppError {
     pub fn new(message: String) -> Self {
-        ClientError {
+        AppError {
             message
         }
     }
 }
 
-impl error::Error for ClientError {
+impl error::Error for AppError {
     fn description(&self) -> &str {
         &self.message
     }
 }
 
-impl std::fmt::Display for ClientError {
+impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
         write!(f, "Client Error")
-    }
-}
-
-#[derive(Debug, Clone)]
-pub struct ServerError {
-    message: String
-}
-
-impl ServerError {
-    pub fn new(message: String) -> Self {
-        ServerError {
-            message
-        }
-    }
-}
-
-impl error::Error for ServerError {
-    fn description(&self) -> &str {
-        &self.message
-    }
-}
-
-impl std::fmt::Display for ServerError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Server Error")
     }
 }

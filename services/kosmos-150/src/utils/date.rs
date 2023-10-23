@@ -3,7 +3,7 @@ extern crate chrono;
 use chrono::prelude::*;
 
 pub struct DateTime {
-    ussr_months: Vec<String>
+    pub ussr_months: Vec<String>
 }
 
 impl DateTime {
@@ -24,15 +24,16 @@ impl DateTime {
         ];
         
         DateTime {
-            ussr_months: ussr_months
+            ussr_months
         }
     }
 
     pub fn get_current_date(&self) -> String {
         let current_date: NaiveDate = Utc::now().date_naive();
-        format!("{} {}, 2093 год", 
+        format!("{} {}, {}", 
             current_date.day0(), 
-            self.ussr_months[current_date.month0() as usize]
+            self.ussr_months[current_date.month0() as usize],
+            Local::now().time().format("%H:%M")
         )
     }
 }

@@ -3,7 +3,7 @@ use diesel::r2d2::ConnectionManager;
 use lazy_static::lazy_static;
 use std::env;
 
-use crate::error::ServerError;
+use crate::error::AppError;
 
 type Pool = r2d2::Pool<ConnectionManager<PgConnection>>;
 pub type DbConnection = r2d2::PooledConnection<ConnectionManager<PgConnection>>;
@@ -21,7 +21,7 @@ pub fn init() {
     connection().expect("Failed to get db connection");
 }
 
-pub fn connection() -> Result<DbConnection, ServerError> {
+pub fn connection() -> Result<DbConnection, AppError> {
     POOL.get()
-        .map_err(|e| ServerError::new(format!("Failed getting db connection: {}", e)))
+        .map_err(|e| AppError::new(format!("Failed getting db connection: {}", e)))
 }

@@ -1,21 +1,22 @@
-use crate::{menu::transaction::Transaction, services::auth_service::AuthService};
+use crate::{menu::transaction::Transaction, services::services::{AuthService, FlightService, OrderService}, network::session::Session, error::AppError};
 
 #[derive(Clone)]
 pub enum MenuTransaction {
     Input(Transaction),
-    Output(String),
+    Output(fn(&Session) -> Result<String, AppError>),
     Exit,
 }
 
 #[derive(Clone)]
 pub struct MenuItem {
+    pub guest_access: bool,
+    pub auth_access: bool,
     pub title: String,
     pub output: MenuTransaction,
 }
 
 #[derive(Clone)]
 pub struct Menu {
-    
     items: Vec<MenuItem>,
 }
 
@@ -24,33 +25,52 @@ impl Menu {
         let mut items = Vec::new();
 
         items.push(MenuItem { 
+            guest_access: true,
+            auth_access: true,
             title: ("Список прибывающих рейсов".to_owned()), 
-            output: {MenuTransaction::Output("Хз мне пох".to_string())} }
+            output: {MenuTransaction::Output(|session| FlightService::get_arriving_flights(session))} }
         );
         items.push(MenuItem { 
-            title: ("Список вылетающих рейсов".to_owned()), 
-            output: (MenuTransaction::Output("Хз мне пох".to_string())) }
+            guest_access: false,
+            auth_access: true,
+            title: ("Создать заказ".to_string()), 
+            output: (MenuTransaction::Input(Transaction::new(
+                vec!["идентификатор рейса".to_string(), "место (нажмите ВВОД, чтобы выбрать случайное)".to_string()], 
+                |session, request| {
+                    OrderService::create_order(session, flight, occupied_seat)
+                }
+            ))) }
         );
         items.push(MenuItem { 
+            guest_access: false,
+            auth_access: true,
+            title: ("Ваши заказы".to_string()), 
+            output: MenuTransaction::Output(|session| OrderService::get_user_orders(session)) }
+        );
+        items.push(MenuItem { 
+            guest_access: true,
+            auth_access: false,
             title: ("Войти в систему".to_owned()), 
             output: (
                 MenuTransaction::Input(Transaction::new(
                     vec!["входное имя".to_string(), "секретный ключ".to_string()],
-                    |req| {
+                    |session, req| {
                         let user_data = req.get_user_data();
                         let username = user_data[0].clone();
                         let password = user_data[1].clone();
-                        AuthService::login(username, password)
+                        AuthService::login(session, username, password)
                     }
                 )))
             }
         );
         items.push(MenuItem { 
+            guest_access: true,
+            auth_access: false,
             title: ("Зарегистрироваться в системе".to_owned()), 
             output: (
                 MenuTransaction::Input(Transaction::new(
                     vec!["входное имя".to_string(), "секретный ключ".to_string()],
-                    |req| {
+                    |_session, req| {
                         let user_data = req.get_user_data();
                         let username = user_data[0].clone();
                         let password = user_data[1].clone();
@@ -60,9 +80,11 @@ impl Menu {
             ) 
             }
         );
-        items.push(MenuItem { 
+        items.push(MenuItem {
+            guest_access: true,
+            auth_access: true, 
             title: ("Историческая справка".to_owned()), 
-            output: (MenuTransaction::Output(r#"
+            output: (MenuTransaction::Output(|_| Ok(r#"
     В 2067 году, в честь столетия Октябрьской Революции, 
 профессор Московского Государственного Университета (МГУ) по космической науке, Харитонов Иван Петрович, 
 вдохновленный идеями социализма и научными достижениями, объединил свою страсть к космосу с горячим патриотизмом. 
@@ -83,21 +105,12 @@ impl Menu {
 Этот проект был воплощением идеалов социализма, а каждый билет на корабль "Космос-150" 
 был билетом в великое будущее Советского Союза и космической эпохи. 
 "Вместе мы покоряем космос!" - так громилось приглашение Ивана Петровича и его студентов, и они продолжали стремиться к звёздам вместе, как единое советское сообщество.
-
-            "#.to_string())) }
+            "#.to_string()))) }
         );
         items.push(MenuItem { 
-            title: ("Инструкция по использованию".to_owned()), 
-            output: (MenuTransaction::Output(r#"
-    Для того, чтобы заказать билет в космическое пространство, необходимо провести процедуру регистрации или,
-если вы ранее регистрировались в службе 'Космос-150', то необходимо войти в систему, используя секретный ключ и Ваше входное имя.
-Далее выбираете пункт назначения (например, созвездие Кассиопея, Шеддар), выбираете дату (например, 12 Ленина), время (9:30). 
-Готово! Информация о Вашем заказе зафиксирована в системе. С Вашей стороны остается явиться по адресу Москва, ул. Революции, 8 (ст. Планетарная в метро, красная ветка)
-и получить билет на космолёт. Счастливого полёта!
-            "#.to_string())) }
-        );
-        items.push(MenuItem { 
-            title: ("Выйти".to_owned()), 
+            guest_access: true,
+            auth_access: true,
+            title: ("Выйти".to_string()), 
             output: (MenuTransaction::Exit) }
         );
 
@@ -105,11 +118,14 @@ impl Menu {
             items
         }
     }
-    pub fn display_menu(&self) -> String {
+    pub fn display_menu(&self, session: &Session) -> String {
         let mut menu = String::new();
+        let is_authorized = session.user_id.is_some();
         menu.push_str("\n");
         for i in 0..self.items.len() {
-            menu.push_str(format!("> {idx}: {title}\n", idx=i+1, title=self.items[i].title).as_str());
+            if (is_authorized && self.items[i].auth_access )|| (!is_authorized && self.items[i].guest_access) {
+                menu.push_str(format!("> {idx}: {title}\n", idx=i+1, title=self.items[i].title).as_str());
+            }
         }
         menu
     }

@@ -31,24 +31,29 @@ CREATE TABLE flights (
     departure TIMESTAMP NOT NULL
 );
 
-CREATE UNIQUE INDEX flights_idx ON flights (spaceship_id, from_spaceport_id, to_spaceport_id);
+CREATE UNIQUE INDEX flights_idx ON flights (spaceship_id, from_spaceport_id, to_spaceport_id, departure);
 
-CREATE TABLE users_flights (
+CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
     user_id SERIAL REFERENCES users (id),
-    flight_id SERIAL REFERENCES flight (id),
+    flight_id SERIAL REFERENCES flights (id),
     occupied_seat INT NOT NULL
 );
 
-CREATE UNIQUE INDEX users_flights_idx ON users_flights (user_id, flight_id);
+CREATE UNIQUE INDEX orders_idx ON orders (user_id, flight_id);
 
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Звезда", "Шедар", "Шедар-альфа");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Красный Октябрь", "Солнце", "Земля");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Аврора", "Вега", "Свердлов");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Горизонт", "Солнце", "Юпитер");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Пролетариат", "Солнце", "Сатурн");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Гагарин-100", "Солнце", "Венера");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Луч", "Арктур", "Бафисто");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Ленин", "Ригель", "Ригель-1Л");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Союз", "Капелла", "Ляпис");
-INSERT INTO spaceports ("name", star_system, "location") VALUES ("Заря", "Сириус", "Сириус-Бета");
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Звезда', 'Шедар', 'Шедар-альфа');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Красный Октябрь', 'Солнце', 'Земля');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Аврора', 'Вега', 'Свердлов');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Горизонт', 'Солнце', 'Юпитер');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Пролетариат', 'Солнце', 'Сатурн');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Гагарин-100', 'Солнце', 'Венера');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Луч', 'Арктур', 'Бафисто');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Ленин', 'Ригель', 'Ригель-1Л');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Союз', 'Капелла', 'Ляпис');
+INSERT INTO spaceports ("name", star_system, "location") VALUES ('Заря', 'Сириус', 'Сириус-Бета');
+
+INSERT INTO spaceships ("name", seats_number) VALUES ('Восток', 50);
+INSERT INTO spaceships ("name", seats_number) VALUES ('КСУ-27', 10);
+INSERT INTO spaceships ("name", seats_number) VALUES ('КТУ-400', 150);
+INSERT INTO spaceships ("name", seats_number) VALUES ('Союз', 25);

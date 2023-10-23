@@ -3,11 +3,14 @@
 #![allow(unused)]
 #![allow(clippy::all)]
 
+use chrono::{NaiveDateTime, Utc, NaiveDate};
 use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
-use diesel::prelude::{Queryable, Insertable};
-use crate::schema::users;
+use diesel::prelude::*;
+use crate::schema::spaceports::{id, name, star_system, location};
+use crate::schema::{users, spaceports, spaceships, flights, orders};
 
-use crate::{error::ClientError, pkg::db};
+use crate::utils::date;
+use crate::{error::AppError, pkg::db};
 
 #[derive(Queryable, Insertable, Debug)]
 pub struct User {
@@ -17,22 +20,25 @@ pub struct User {
 }
 
 impl User {
-    pub fn create(user: User) -> Result<Self, ClientError> {
+    pub fn create(username: String, password: String) -> Result<Self, AppError> {
         let conn_res = db::connection();
         match conn_res {
             Ok(mut conn) => {
                 let res = diesel::insert_into(users::table)
-                    .values(user)
+                    .values((
+                        users::username.eq(username),
+                        users::password.eq(password)
+                    ))
                     .get_result(&mut conn);
                 match res {
                     Ok(u)=> Ok(u),
-                    Err(e) => Err(ClientError::new(e.to_string()))
+                    Err(e) => Err(AppError::new(e.to_string()))
                 } 
             }
-            Err(e) => Err(ClientError::new(e.to_string()))
+            Err(e) => Err(AppError::new(e.to_string()))
         }
     }
-    pub fn find(username: String, password: String) -> Result<Self, ClientError> {
+    pub fn find(username: String, password: String) -> Result<Self, AppError> {
         let conn_res = db::connection();
         match conn_res {
             Ok(mut conn) => {
@@ -42,10 +48,10 @@ impl User {
                     .first(&mut conn);
                 match res {
                     Ok(user) => Ok(user),
-                    Err(e) => Err(ClientError::new(e.to_string()))
+                    Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(ClientError::new(e.to_string()))
+            Err(e) => Err(AppError::new(e.to_string()))
         }
     }
 
@@ -54,8 +60,163 @@ impl User {
     }
 }
 
-#[derive(Queryable, Debug)]
+#[derive(Queryable, Identifiable, PartialEq, Debug)]
 pub struct Spaceport {
-    pub id: u32,
+    pub id: i32,
     pub name: String,
+    pub star_system: String,
+    pub location: String,
+}
+
+impl Spaceport {
+    pub fn find_all() -> Result<Vec<Self>, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = spaceports::table.load(&mut conn);
+                match res {
+                    Ok(res) => Ok(res),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+}
+
+#[derive(Queryable, Identifiable, PartialEq, Debug)]
+pub struct Spaceship {
+    pub id: i32,
+    pub name: String,
+    pub seats_number: i32
+}
+
+impl Spaceship {
+    pub fn find_all() -> Result<Vec<Self>, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = spaceships::table.load(&mut conn);
+                match res {
+                    Ok(res) => Ok(res),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+}
+
+#[derive(Debug, Identifiable, Queryable, Insertable)]
+#[diesel(belongs_to(Spaceship))]
+#[diesel(belongs_to(Spaceport, foreign_key = from_spaceport_id))]
+#[diesel(belongs_to(Spaceport, foreign_key = to_spaceport_id))]
+pub struct Flight {
+    pub id: i32,
+    pub spaceship_id: i32,
+    pub from_spaceport_id: i32,
+    pub to_spaceport_id: i32,
+    pub departure: NaiveDateTime
+}
+
+impl Flight {
+    pub fn create(spaceship: &Spaceship, departure_spaceport: &Spaceport, arrival_spaceport: &Spaceport, departure: NaiveDateTime) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn) => {
+                let res = diesel::insert_into(flights::table)
+                    .values((
+                        flights::spaceship_id.eq(spaceship.id),
+                        flights::from_spaceport_id.eq(departure_spaceport.id),
+                        flights::to_spaceport_id.eq(arrival_spaceport.id),
+                        flights::departure.eq(departure)
+                    ))
+                    .get_result(&mut conn);
+                match res {
+                    Ok(u)=> Ok(u),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                } 
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+    pub fn find_arriving() -> Result<Vec<Self>, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let now = Utc::now().naive_utc();
+                let res = flights::table
+                    .filter(flights::departure.gt(now))
+                    .load(&mut conn);
+                match res {
+                    Ok(flights) => Ok(flights),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+    pub fn find_by_id(flight_id: i32) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let now = Utc::now().naive_utc();
+                let res = flights::table
+                    .filter(flights::id.eq(flight_id))
+                    .first(&mut conn);
+                match res {
+                    Ok(flight) => Ok(flight),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+}
+
+#[derive(Queryable, Insertable, Debug)]
+#[diesel(belongs_to(Flight))]
+#[diesel(belongs_to(User))]
+pub struct Order {
+    pub id: i32,
+    pub flight_id: i32,
+    pub user_id: i32,
+    pub occupied_seat: i32
+}
+
+impl Order {
+    pub fn create(order: Order) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = diesel::insert_into(orders::table)
+                    .values((
+                        orders::flight_id.eq(order.flight_id),
+                        orders::user_id.eq(order.user_id),
+                        orders::occupied_seat.eq(order.occupied_seat)
+                    ))
+                    .get_result(&mut conn);
+                match res {
+                    Ok(order) => Ok(order),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+    pub fn find_orders_by_user(user_id: i32) -> Result<Vec<Self>, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = orders::table
+                    .filter(orders::user_id.eq(user_id))
+                    .load(&mut conn);
+                match res {
+                    Ok(order) => Ok(order),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
 }
