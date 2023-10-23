@@ -12,7 +12,7 @@ Coming...
 |---------|----------|---------|---------|---------|
 | **[kosmos-150](services/kosmos-150/)** | Rust | [Checker](checkers/kosmos-150/) | [Sploits](sploits/kosmos-150/) | [@enmex](https://github.com/enmex) |
 | **[zapiski](services/zapiski/)** | C++ | [Checker](checkers/zapiski/) | [Sploits](sploits/zapiski/) | [@pc-rockefeller](https://github.com/pc-rockefeller) |
-| **[cryptodurka](services/cryptodurka/)** | Go | [Checker](checkers/cryptodurka/) | [Sploits](sploits/cryptodurka/) | [@gusyaross](https://github.com/gusyaross) |
+| **[cryptodurka](services/cryptodurka/)** | Python | [Checker](checkers/cryptodurka/) | [Sploits](sploits/cryptodurka/) | [@gusyaross](https://github.com/gusyaross) |
 | **[krasnyj_oktyabr](services/krasnyj_oktyabr/)** | C | [Checker](checkers/krasnyj_oktyabr/) | [Sploits](sploits/krasnyj_oktyabr/) | [@lucky624](https://github.com/lucky624) |
 
 
