@@ -36,7 +36,7 @@ impl User {
                     Err(e) => Err(AppError::new(e.to_string()))
                 } 
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find(username: String) -> Result<Self, AppError> {
@@ -51,7 +51,7 @@ impl User {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
 
@@ -79,7 +79,7 @@ impl Spaceport {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_by_id(spaceport_id: i32) -> Result<Self, AppError> {
@@ -96,7 +96,7 @@ impl Spaceport {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
 }
@@ -119,7 +119,7 @@ impl Spaceship {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_by_id(spaceship_id: i32) -> Result<Self, AppError> {
@@ -136,7 +136,24 @@ impl Spaceship {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
+        }
+    }
+    pub fn find_by_order(order_id: i32) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = flights::table
+                    .inner_join(orders::table)
+                    .inner_join(spaceships::table)
+                    .filter(orders::id.eq(order_id))
+                    .first::<(Flight, Order, Spaceship)>(&mut conn);
+                match res {
+                    Ok(tuple) => Ok(tuple.2),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(e)
         }
     }
 }
@@ -171,7 +188,7 @@ impl Flight {
                     Err(e) => Err(AppError::new(e.to_string()))
                 } 
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_arriving() -> Result<Vec<Self>, AppError> {
@@ -187,7 +204,7 @@ impl Flight {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_by_id(flight_id: i32) -> Result<Self, AppError> {
@@ -203,18 +220,34 @@ impl Flight {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
+        }
+    }
+    pub fn remove_expired_flights() -> Option<AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let now = Utc::now().naive_utc();
+                let res = diesel::delete(flights::table)
+                    .filter(flights::departure.lt(now))
+                    .execute(&mut conn);
+                match res {
+                    Ok(flight) => None,
+                    Err(e) => Some(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Some(e)
         }
     }
 }
 
 #[derive(Queryable, Insertable, Debug)]
-#[diesel(belongs_to(Flight))]
-#[diesel(belongs_to(User))]
+#[diesel(belongs_to(Flight, foreign_key = flight_id))]
+#[diesel(belongs_to(User, foreign_key = user_id))]
 pub struct Order {
     pub id: i32,
-    pub flight_id: i32,
     pub user_id: i32,
+    pub flight_id: i32,
     pub occupied_seat: i32,
     pub comment: Option<String>
 }
@@ -237,7 +270,7 @@ impl Order {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_orders_by_user(user_id: i32) -> Result<Vec<Self>, AppError> {
@@ -252,7 +285,7 @@ impl Order {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn count_flight_orders(flight_id: i32) -> Result<i64, AppError> {
@@ -268,7 +301,7 @@ impl Order {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }
     pub fn find_flight_order_by_seat(flight_id: i32, seat_number: i32) -> Result<Order, AppError> {
@@ -288,7 +321,40 @@ impl Order {
                     Err(e) => Err(AppError::new(e.to_string()))
                 }
             }
-            Err(e) => Err(AppError::new(e.to_string()))
+            Err(e) => Err(e)
         }
     }   
+    pub fn find_by_id(user_id: i32, order_id: i32) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = orders::table
+                    .filter(
+                        orders::id.eq(order_id).or(orders::user_id.eq(user_id))
+                    )
+                    .first(&mut conn);
+                match res {
+                    Ok(order) => Ok(order),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(e)
+        }
+    }
+    pub fn get_order_occupied_seats(order_id: i32) -> Result<Vec<i32>, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = orders::table
+                    .select(orders::occupied_seat)
+                    .filter(orders::id.eq(order_id))
+                    .load(&mut conn);
+                match res {
+                    Ok(occupied_seats) => Ok(occupied_seats),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(e)
+        }
+    }
 }

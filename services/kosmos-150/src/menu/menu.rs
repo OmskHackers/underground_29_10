@@ -34,7 +34,7 @@ impl Menu {
                 auth_access: true,
                 title: ("Создать заказ".to_string()), 
                 output: (MenuTransaction::Input(Transaction::new(
-                    vec!["идентификатор рейса".to_string(), "место (нажмите ВВОД, чтобы выбрать случайное)".to_string(), "дополнительные пожелания".to_string()], 
+                    vec!["идентификатор рейса".to_string(), "место (нажмите ВВОД, чтобы выбрать случайное)".to_string(), "дополнительные пожелания (нажмите ВВОД для пропуска)".to_string()], 
                     |session, request| {
                         let user_data = request.get_user_inputs();
                         let flight_id = match user_data[0].parse::<i32>() {
@@ -57,6 +57,23 @@ impl Menu {
                 auth_access: true,
                 title: ("Ваши заказы".to_string()), 
                 output: MenuTransaction::Output(|session| OrderService::get_user_orders(session)) 
+            },
+            MenuItem { 
+                guest_access: false,
+                auth_access: true,
+                title: ("Посмотреть места в заказе".to_string()), 
+                output: (MenuTransaction::Input(Transaction::new(
+                    vec!["идентификатор Вашего заказа".to_string()], 
+                    |session, request| {
+                        let user_data = request.get_user_inputs();
+                        let order_id = match user_data[0].parse::<i32>() {
+                            Ok(num) => num,
+                            Err(_) => -1
+                        };
+
+                        OrderService::get_order_seats(session, order_id)
+                    }
+                ))) 
             },
             MenuItem { 
                 guest_access: true,

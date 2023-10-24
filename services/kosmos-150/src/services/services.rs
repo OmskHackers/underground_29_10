@@ -69,7 +69,7 @@ impl FlightService {
         }
     }
     pub fn generate_flights() -> Option<AppError> {
-        let mut future = Utc::now().naive_local() + Duration::minutes(5);
+        let mut future = Utc::now().naive_local() + Duration::minutes(1);
 
         let spaceships = Spaceship::find_all().expect("something went wrong while getting spaceships");
         let spaceports = Spaceport::find_all().expect("something went wrong while getting spaceports");
@@ -77,7 +77,10 @@ impl FlightService {
         for _i in 0..10 {
             let spaceship = get_rand_element(&spaceships);
             let departure_spaceport = get_rand_element(&spaceports);
-            let arrival_spaceport = get_rand_element(&spaceports);
+            let mut arrival_spaceport = get_rand_element(&spaceports);
+            while departure_spaceport.id == arrival_spaceport.id {
+                arrival_spaceport = get_rand_element(&spaceports);
+            }
 
             let res = Flight::create(
                 spaceship, 
@@ -92,6 +95,9 @@ impl FlightService {
             }
         }
         None
+    }
+    pub fn remove_expired_flights() -> Option<AppError> {
+        Flight::remove_expired_flights()
     }
 }
 
@@ -187,7 +193,8 @@ impl OrderService {
 
                     output.push_str(
                         format!(
-                            ">> | РЕЙC-{} | {}({}, {}) ---> {}({}, {}), вылет в {}, место {}, \n", 
+                            ">> ЗАКАЗ-{}: | РЕЙC-{} | {}({}, {}) ---> {}({}, {}), вылет в {}, место {}, \n", 
+                            order.id,
                             order.flight_id,
                             departure_spaceport.name,
                             departure_spaceport.location,
@@ -203,6 +210,59 @@ impl OrderService {
                 Ok(output)
             },
             Err(e) => Err(e)
+        }
+    }
+    pub fn get_order_seats(session: &Session, order_id: i32) -> Result<String, AppError> {
+        if session.user_id.is_none() {
+            return Err(AppError::new("пользователь не в системе".to_string()));
+        }
+        let user_id = session.user_id.unwrap();
+
+        let order_res = Order::find_by_id(user_id, order_id);
+        match order_res {
+            Ok(order) => {
+                let spaceship = Spaceship::find_by_order(order_id).expect("cannot find spaceship");
+                let flight = Flight::find_by_id(order.flight_id).expect("cannot find flight");
+                let departure_spaceport = Spaceport::find_by_id(flight.from_spaceport_id).expect("cannot find spaceport");
+                let arrival_spaceport = Spaceport::find_by_id(flight.to_spaceport_id).expect("cannot find spaceport");
+
+                let mut output = String::new();
+                output.push_str(format!(
+                    ">> ЗАКАЗ-{}: космолёт {}, место {}, {} ---> {}, вылет в {}",
+                    order.id,
+                    spaceship.name,
+                    order.occupied_seat,
+                    departure_spaceport.name,
+                    arrival_spaceport.name,
+                    flight.departure.format("%H:%M")
+                ).as_str());
+                if order.comment.is_some() {
+                    let comment = order.comment.unwrap();
+                    output.push_str(
+                        format!(", дополнительные пожелания: {}\n", 
+                        comment
+                    ).as_str());
+                } else {
+                    output.push_str("\n");
+                }
+                let occupied_seats_res = Order::get_order_occupied_seats(order_id);
+                match occupied_seats_res {
+                    Ok(occupied_seats) => {
+                        output.push_str(format!(
+                            "Занятые места:",
+                        ).as_str());
+                        for occupied_seat in occupied_seats {
+                            output.push_str(format!(
+                                " {}",
+                                occupied_seat
+                            ).as_str());
+                        }
+                        Ok(output)
+                    },
+                    Err(e) => Err(e)
+                }
+            },
+            Err(_) => Err(AppError::new("заказ не найден".to_string()))
         }
     }
 }

@@ -57,11 +57,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         loop {
-            println!("generating flights...");
+            if let Some(err) = FlightService::remove_expired_flights() {
+                eprintln!("Error removing expired flights; err = {:?}", err);
+            }
             if let Some(err) = FlightService::generate_flights() {
                 eprintln!("Error generating flights; err = {:?}", err);
             }
-            sleep(Duration::from_secs(5 * 60)).await;
+            sleep(Duration::from_secs(60)).await;
         }
     });
 
