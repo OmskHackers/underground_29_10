@@ -1,6 +1,7 @@
 import asyncio
-from auth import register
+from auth import register, login
 from db import connect_db
+from hihihaha import learn_about_bro, check_recipe, get_list_bro, get_params, write_recipe
 
 
 class GlobalHandler(object):
@@ -9,7 +10,8 @@ class GlobalHandler(object):
         self.tx = tx
 
     async def run(self):
-        self.tx.write("Добро пожаловать в дурку. Снова. Выбирай сторону: пациент или карательный психиатр\n".encode('utf-8'))
+        self.tx.write("Добро пожаловать в дурку. Снова. Выбирай сторону: пациент или карательный психиатр. "
+                      "Можешь рассказать нам о своих секретах, мы их бережно храним\n".encode('utf-8'))
         await self.tx.drain()
         while True:
             try:
@@ -36,6 +38,44 @@ class GlobalHandler(object):
                 self.tx.write("Нужно выбрать одну из ролей\n".encode('utf-8'))
                 return
             await register(self.tx, args)
+
+        elif command == "login":
+            if len(args) != 3:
+                self.tx.write("Укажи свой позывной и пароль\n".encode('utf-8'))
+                return
+            await login(self.tx, args)
+
+        elif command == "learn_about_bro":
+            if len(args) != 3:
+                self.tx.write("Укажи свою сессию и позывной братана, о котором хочешь побольше узнать\n".encode('utf-8'))
+                return
+            await learn_about_bro(self.tx, args)
+
+        elif command == "write_recipe":
+            if len(args) != 4:
+                self.tx.write(
+                    "Укажи свою сессию, позывной пациента, и что ему хочешь выписать\n".encode('utf-8'))
+                return
+            await write_recipe(self.tx, args)
+
+        elif command == "check_recipes":
+            if len(args) != 3:
+                self.tx.write("Укажи свой сессию и позывной братана, чтобы узнать инфу о назначенном лечении\n".encode('utf-8'))
+                return
+            await check_recipe(self.tx, args)
+
+        elif command == "get_list_bro":
+            if len(args) != 2:
+                self.tx.write("Не забывай представиться. Такое доступно только своим\n".encode('utf-8'))
+                return
+            await get_list_bro(self.tx, args)
+
+        elif command == "get_params":
+            if len(args) != 2:
+                self.tx.write("Только. Своим. Только.\n".encode('utf-8'))
+                return
+            await get_params(self.tx, args)
+
         else:
             self.tx.write("Такую услугу не оказываем\n".encode('utf-8'))
 
