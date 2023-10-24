@@ -26,8 +26,8 @@ CREATE UNIQUE INDEX spaceships_idx ON spaceships ("name");
 CREATE TABLE flights (
     id SERIAL PRIMARY KEY,
     spaceship_id SERIAL REFERENCES spaceships (id),
-    from_spaceport_id SERIAL REFERENCES spaceports (id),
-    to_spaceport_id SERIAL REFERENCES spaceports (id),
+    from_spaceport_id SERIAL NOT NULL REFERENCES spaceports (id),
+    to_spaceport_id SERIAL NOT NULL REFERENCES spaceports (id),
     departure TIMESTAMP NOT NULL
 );
 
@@ -35,9 +35,10 @@ CREATE UNIQUE INDEX flights_idx ON flights (spaceship_id, from_spaceport_id, to_
 
 CREATE TABLE orders (
     id SERIAL PRIMARY KEY,
-    user_id SERIAL REFERENCES users (id),
-    flight_id SERIAL REFERENCES flights (id),
-    occupied_seat INT NOT NULL
+    user_id SERIAL NOT NULL REFERENCES users (id),
+    flight_id SERIAL NOT NULL REFERENCES flights (id),
+    occupied_seat INT NOT NULL,
+    "comment" TEXT
 );
 
 CREATE UNIQUE INDEX orders_idx ON orders (user_id, flight_id);

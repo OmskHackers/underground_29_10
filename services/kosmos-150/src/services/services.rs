@@ -1,4 +1,4 @@
-use chrono::Utc;
+use chrono::{Utc, Duration};
 
 use crate::models::models::Order;
 use crate::network::session::Session;
@@ -10,12 +10,12 @@ pub struct AuthService;
 
 impl AuthService {
     pub fn login(session: &mut Session, username: String, password: String) -> Result<String, AppError> {
-        let res = User::find(
-            username, 
-            password,
-        );
+        let res = User::find(username);
         match res {
             Ok(user) => {
+                if !password.eq(&user.password) {
+                    return Err(AppError::new("пользователь не найден".to_string()))
+                }
                 session.set_user_id(user.id);
                 Ok("Вы вошли в систему. Путь к звёздам открыт, товарищ!".to_string())
             },
@@ -26,7 +26,12 @@ impl AuthService {
         let res = User::create(username, password);
         match res {
             Ok(_user) => Ok("Вы зарегистрированы в службе Космос-150.".to_string()),
-            Err(e) => Err(e)
+            Err(e) => {
+                if e.to_string().contains("duplicate") {
+                    return Err(AppError::new("пользователь уже существует в системе".to_string()));
+                }
+                Err(e)
+            }
         }
     }
 }
@@ -41,7 +46,22 @@ impl FlightService {
             Ok(flights) => {
                 let mut output = String::new();
                 for flight in flights {
-                    output.push_str(format!("{} {} {} {}\n", flight.spaceship_id, flight.from_spaceport_id, flight.to_spaceport_id, flight.departure).as_str());
+                    let spaceship = Spaceship::find_by_id(flight.spaceship_id).expect("cannot find spaceship");
+                    let departure_spaceport = Spaceport::find_by_id(flight.from_spaceport_id).expect("cannot find spaceport");
+                    let arrival_spaceport = Spaceport::find_by_id(flight.to_spaceport_id).expect("cannot find spaceport");
+                    
+                    output.push_str(format!(
+                        ">> | РЕЙC-{} | космолёт {}, {}({}, {}) ---> {}({}, {}), вылет в {}\n", 
+                        flight.id,
+                        spaceship.name, 
+                        departure_spaceport.name,
+                        departure_spaceport.location,
+                        departure_spaceport.star_system, 
+                        arrival_spaceport.name,
+                        arrival_spaceport.location,
+                        arrival_spaceport.star_system, 
+                        flight.departure.format("%H:%M")
+                    ).as_str());
                 }
                 Ok(output)
             }
@@ -49,6 +69,8 @@ impl FlightService {
         }
     }
     pub fn generate_flights() -> Option<AppError> {
+        let mut future = Utc::now().naive_local() + Duration::minutes(5);
+
         let spaceships = Spaceship::find_all().expect("something went wrong while getting spaceships");
         let spaceports = Spaceport::find_all().expect("something went wrong while getting spaceports");
         
@@ -61,8 +83,9 @@ impl FlightService {
                 spaceship, 
                 departure_spaceport, 
                 arrival_spaceport, 
-                Utc::now().naive_utc(),
+                future
             );
+            future = future + Duration::minutes(1);
             match res {
                 Ok(_res) => continue,
                 Err(e) => return Some(e)
@@ -76,7 +99,7 @@ impl FlightService {
 pub struct OrderService;
 
 impl OrderService {
-    pub fn create_order(session: &Session, flight_id: i32, occupied_seat: i32) -> Result<String, AppError> {
+    pub fn create_order(session: &Session, flight_id: i32, occupied_seat: Option<i32>, comment: Option<String>) -> Result<String, AppError> {
         if session.user_id.is_none() {
             return Err(AppError::new("пользователь не в системе".to_string()));
         }
@@ -85,26 +108,62 @@ impl OrderService {
         let flight_res = Flight::find_by_id(flight_id);
         match flight_res {
             Ok(flight) => {
+                let seat;
+                if occupied_seat.is_some() {
+                    seat = occupied_seat.unwrap();
+                    let order_result = Order::find_flight_order_by_seat(flight_id, seat);
+                    match order_result {
+                        Ok(_) => {
+                            return Err(AppError::new("место занято".to_string()));
+                        },
+                        Err(err) => {
+                            if !err.to_string().contains("not found") {
+                                return Err(err);
+                            }
+                        }
+                    }
+                } else {
+                    let spaceship = Spaceship::find_by_id(flight.spaceship_id).expect("cannot find spaceship");
+                    let seats_count = Order::count_flight_orders(flight_id).expect("failed to count seats");
+                    if seats_count >= spaceship.seats_number.into() {
+                        return Err(AppError::new("все места на данный рейс заняты".to_string()));
+                    }
+                    seat = seats_count as i32 + 1;
+                }
                 let res = Order::create(Order {
                     id: 0,
-                    flight_id: flight_id,
+                    flight_id,
                     user_id,
-                    occupied_seat
+                    occupied_seat: seat,
+                    comment
                 });
                 match res {
                     Ok(_order) => {
-                        Ok(format!("Создан заказ для пользователя {}, рейс {}-{}, дата и время вылета {}. Просим Вас явиться на космодром {} за час до вылета для получения билета. Спасибо!", 
-                            user_id,
-                            flight.from_spaceport_id,
-                            flight.to_spaceport_id,
-                            flight.departure,
-                            flight.from_spaceport_id
+                        let departure_spaceport = Spaceport::find_by_id(flight.from_spaceport_id).expect("cannot find spaceport");
+                        let arrival_spaceport = Spaceport::find_by_id(flight.to_spaceport_id).expect("cannot find spaceport");
+                        
+                        Ok(format!("Заказ создан! РЕЙС-{} {} --> {}, вылет в {}. Просим Вас явиться на космодром '{}' за час до вылета для получения билета.", 
+                            flight.id,
+                            departure_spaceport.name,
+                            arrival_spaceport.name,
+                            flight.departure.format("%H:%M"),
+                            departure_spaceport.name
                         ))
                     },
-                    Err(e) => Err(e)
+                    Err(e) => {
+                        if e.to_string().contains("duplicate") {
+                            return Err(AppError::new("заказ уже создан".to_string()));
+                        }
+                        Err(e)
+                    }
                 }
             }
-            Err(e) => Err(e)
+            Err(e) => {
+                if e.to_string().contains("not found") {
+                    return Err(AppError::new("рейс не найден".to_string()))
+                }
+                Err(e)
+            }
         }
     }
     pub fn get_user_orders(session: &Session) -> Result<String, AppError> {
@@ -118,10 +177,27 @@ impl OrderService {
             Ok(orders) => {
                 let mut output = String::new();
                 output.push_str("Список заказов:\n");
-                for idx in 0..orders.len() {
+                if orders.len() == 0 {
+                    return Ok("Ваш список заказов пока пустой...".to_string())
+                }
+                for order in orders {
+                    let flight = Flight::find_by_id(order.flight_id).expect("cannot find flight");
+                    let departure_spaceport = Spaceport::find_by_id(flight.from_spaceport_id).expect("cannot find spaceport");
+                    let arrival_spaceport = Spaceport::find_by_id(flight.to_spaceport_id).expect("cannot find spaceport");
+
                     output.push_str(
-                        format!(">> {}: {}-{}, {}, место {}", idx+1, orders[idx].flight_id, orders[idx].flight_id, orders[idx].id, orders[idx].occupied_seat)
-                        .as_str()
+                        format!(
+                            ">> | РЕЙC-{} | {}({}, {}) ---> {}({}, {}), вылет в {}, место {}, \n", 
+                            order.flight_id,
+                            departure_spaceport.name,
+                            departure_spaceport.location,
+                            departure_spaceport.star_system, 
+                            arrival_spaceport.name,
+                            arrival_spaceport.location,
+                            arrival_spaceport.star_system, 
+                            flight.departure.format("%H:%M"),
+                            order.occupied_seat
+                        ).as_str()
                     );
                 }
                 Ok(output)

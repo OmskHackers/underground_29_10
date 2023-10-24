@@ -8,11 +8,10 @@ use tokio::time::{sleep, Duration};
 use kosmos150::menu::menu::Menu;
 use kosmos150::menu::menu::MenuTransaction::{Input, Output, Exit};
 use kosmos150::network::session::Session;
-use kosmos150::utils::date::DateTime;
+use kosmos150::utils::date::UssrDateTime;
 
 #[tokio::main]
 async fn main() -> Result<(), Box<dyn std::error::Error>> {
-    let date_time = DateTime::new();
     let art = format!(r#"
                 ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⢀⣦⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⣼⣿⡆⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
@@ -44,16 +43,16 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠑⠶⣦⣤⣶⣶⣿⣿⡿⠛⣡⣴⠟⠉⠀⠀⠈⠻⢷⣄⡙⠻⢿⣿⣷⣶⣶⣶⠶⠊⠁⠀⠀⠀⠀⠀⠀⠀⠀⠀
     ⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠉⠉⠉⠉⠀⠠⣾⠟⠁⠀⠀⠀⠀⠀⠀⠀⠙⣿⡦⠀⠀⠉⠉⠉⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀⠀
     
-        ЕДИНАЯ ГОСУДАРСТВЕННАЯ СЕТЬ ВЫЧИСЛИТЕЛЬНЫХ ЦЕНТРОВ (ЕГСВЦ)
+    ЕДИНАЯ ГОСУДАРСТВЕННАЯ СЕТЬ ВЫЧИСЛИТЕЛЬНЫХ ЦЕНТРОВ (ЕГСВЦ)
             СССР, Москва, {}
     
 СЛУЖБА ПРЕДВАРИТЕЛЬНОГО ЗАКАЗА БИЛЕТОВ В КОСМИЧЕСКОЕ ПРОСТРАНСТВО 'КОСМОС-150'
     
-"#, date_time.get_current_date());
+"#, UssrDateTime::get_current_date());
 
     let listener = TcpListener::bind("0.0.0.0:2067").await?;
     db::init();
-
+    println!("db initialized");
     let menu_arc = Arc::new(Menu::new());
 
     tokio::spawn(async move {
@@ -89,7 +88,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
                         let res: Result<usize, std::num::ParseIntError> = user_input.parse::<usize>();
                         match res {
                             Ok(selected)=> {
-                                match menu_arc_clone.display_selected(selected) {
+                                match menu_arc_clone.display_selected(&session, selected) {
                                     Ok(tr)=> {
                                         match tr {
                                             Output(output_fn)=> {

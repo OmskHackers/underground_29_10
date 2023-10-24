@@ -22,6 +22,6 @@ impl error::Error for AppError {
 
 impl std::fmt::Display for AppError {
     fn fmt(&self, f: &mut fmt::Formatter) -> std::fmt::Result {
-        write!(f, "Client Error")
+        write!(f, "{}", self.message)
     }
 }

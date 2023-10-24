@@ -2,37 +2,29 @@ extern crate chrono;
 
 use chrono::prelude::*;
 
-pub struct DateTime {
-    pub ussr_months: Vec<String>
-}
+const USSR_MONTHS: [&'static str; 12] = [
+    "Ленина",
+    "Маркса",
+    "революции",
+    "Свердлова",
+    "мая",
+    "Советской конституции",
+    "жатвы",
+    "мира",
+    "Коминтерна",
+    "Энгельса",
+    "великой революции",
+    "Сталина"
+];
 
-impl DateTime {
-    pub fn new() -> Self {
-        let ussr_months = vec![
-            "Ленина".to_string(),
-            "Маркса".to_string(),
-            "революции".to_string(),
-            "Свердлова".to_string(),
-            "мая".to_string(),
-            "Советской конституции".to_string(),
-            "жатвы".to_string(),
-            "мира".to_string(),
-            "Коминтерна".to_string(),
-            "Энгельса".to_string(),
-            "великой революции".to_string(),
-            "Сталина".to_string()
-        ];
-        
-        DateTime {
-            ussr_months
-        }
-    }
+pub struct UssrDateTime;
 
-    pub fn get_current_date(&self) -> String {
+impl UssrDateTime {
+    pub fn get_current_date() -> String {
         let current_date: NaiveDate = Utc::now().date_naive();
         format!("{} {}, {}", 
             current_date.day0(), 
-            self.ussr_months[current_date.month0() as usize],
+            USSR_MONTHS[current_date.month0() as usize],
             Local::now().time().format("%H:%M")
         )
     }

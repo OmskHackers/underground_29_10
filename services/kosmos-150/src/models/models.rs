@@ -4,6 +4,7 @@
 #![allow(clippy::all)]
 
 use chrono::{NaiveDateTime, Utc, NaiveDate};
+use diesel::dsl::count;
 use diesel::{RunQueryDsl, QueryDsl, ExpressionMethods};
 use diesel::prelude::*;
 use crate::schema::spaceports::{id, name, star_system, location};
@@ -38,13 +39,12 @@ impl User {
             Err(e) => Err(AppError::new(e.to_string()))
         }
     }
-    pub fn find(username: String, password: String) -> Result<Self, AppError> {
+    pub fn find(username: String) -> Result<Self, AppError> {
         let conn_res = db::connection();
         match conn_res {
             Ok(mut conn) => {
                 let res = users::table
                     .filter(users::username.eq(username))
-                    .filter(users::password.eq(password))
                     .first(&mut conn);
                 match res {
                     Ok(user) => Ok(user),
@@ -82,6 +82,23 @@ impl Spaceport {
             Err(e) => Err(AppError::new(e.to_string()))
         }
     }
+    pub fn find_by_id(spaceport_id: i32) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = spaceports::table
+                    .filter(
+                        spaceports::id.eq(spaceport_id)
+                    )
+                    .first(&mut conn);
+                match res {
+                    Ok(res) => Ok(res),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
 }
 
 #[derive(Queryable, Identifiable, PartialEq, Debug)]
@@ -97,6 +114,23 @@ impl Spaceship {
         match conn_res {
             Ok(mut conn)=> {
                 let res = spaceships::table.load(&mut conn);
+                match res {
+                    Ok(res) => Ok(res),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+    pub fn find_by_id(spaceship_id: i32) -> Result<Self, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = spaceships::table
+                    .filter(
+                        spaceships::id.eq(spaceship_id)
+                    )
+                    .first(&mut conn);
                 match res {
                     Ok(res) => Ok(res),
                     Err(e) => Err(AppError::new(e.to_string()))
@@ -181,7 +215,8 @@ pub struct Order {
     pub id: i32,
     pub flight_id: i32,
     pub user_id: i32,
-    pub occupied_seat: i32
+    pub occupied_seat: i32,
+    pub comment: Option<String>
 }
 
 impl Order {
@@ -193,7 +228,8 @@ impl Order {
                     .values((
                         orders::flight_id.eq(order.flight_id),
                         orders::user_id.eq(order.user_id),
-                        orders::occupied_seat.eq(order.occupied_seat)
+                        orders::occupied_seat.eq(order.occupied_seat),
+                        orders::comment.eq(order.comment)
                     ))
                     .get_result(&mut conn);
                 match res {
@@ -219,4 +255,40 @@ impl Order {
             Err(e) => Err(AppError::new(e.to_string()))
         }
     }
+    pub fn count_flight_orders(flight_id: i32) -> Result<i64, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res: Result<i64, _> = orders::table
+                    .filter(orders::flight_id.eq(flight_id))
+                    .select(count(orders::id))
+                    .first(&mut conn);
+                match res {
+                    Ok(counter) => Ok(counter),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }
+    pub fn find_flight_order_by_seat(flight_id: i32, seat_number: i32) -> Result<Order, AppError> {
+        let conn_res = db::connection();
+        match conn_res {
+            Ok(mut conn)=> {
+                let res = orders::table
+                    .filter(
+                        orders::flight_id.eq(flight_id)
+                    )
+                    .filter(
+                        orders::occupied_seat.eq(seat_number)
+                    )
+                    .first(&mut conn);
+                match res {
+                    Ok(order) => Ok(order),
+                    Err(e) => Err(AppError::new(e.to_string()))
+                }
+            }
+            Err(e) => Err(AppError::new(e.to_string()))
+        }
+    }   
 }

@@ -16,6 +16,7 @@ diesel::table! {
         user_id -> Int4,
         flight_id -> Int4,
         occupied_seat -> Int4,
+        comment -> Nullable<Text>,
     }
 }
 
