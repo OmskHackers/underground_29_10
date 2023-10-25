@@ -69,7 +69,7 @@ impl FlightService {
         }
     }
     pub fn generate_flights() -> Option<AppError> {
-        let mut future = Utc::now().naive_local() + Duration::minutes(1);
+        let mut future = Utc::now().naive_local() + Duration::minutes(5);
 
         let spaceships = Spaceship::find_all().expect("something went wrong while getting spaceships");
         let spaceports = Spaceport::find_all().expect("something went wrong while getting spaceports");
