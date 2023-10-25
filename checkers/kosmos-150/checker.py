@@ -3,6 +3,9 @@ from transliterate import translit
 from faker import Faker
 import random
 from pwn import *
+import sys
+
+context.log_level = 'error'
 
 user = Faker(locale='ru_RU')
 
@@ -12,9 +15,9 @@ def generator(size=12, chars=string.digits + string.ascii_letters):
 def gen_user():
     return translit(user.unique.last_name().replace('ь', 'b') + user.unique.first_name().replace('ь', 'b'), reversed=True) + generator(6)
 
-def send_msg(s, msg: str) -> str:
-    s.send(f'{msg}\n')
-    return s.recvrepeat(timeout=1).decode('utf8')
+def send_msg(socket, msg) -> str:
+    socket.send(f'{msg}\n'.encode())
+    return socket.recvrepeat(timeout=1).decode('utf8')
 
 OK, CORRUPT, MUMBLE, DOWN = 101, 102, 103, 104
 port = 2067
@@ -46,20 +49,24 @@ def get():
 
     try:
         s = remote(ip, port)
-
+        
         # login
-        send_msg(s, '2')
+        send_msg(s, "2")
         send_msg(s, username)
         if not 'вошли в систему' in send_msg(s, password):
+            print("cannot login")
+            s.close()
             close(CORRUPT)
 
         try:
-            order_id = int(send_msg(s, '3').split('\n\n')[0].split('\n')[1].split(' ')[1].split('-')[1].removesuffix(':'))
-            send_msg(s, '4')
+            msg = send_msg(s, "3")
+            data = msg.split('\n\n')[0].split('\n')[1].split(' ')[1].split('-')[1]
+            order_id = int(data[:len(data)-1])
+            send_msg(s, "4")
             res = send_msg(s, order_id)
             if not flag in res:
                 raise Exception("flag not found in orders")
-            send_msg(s, '6')
+            send_msg(s, "6")
             s.close()
             close(OK)
         except Exception as e:
@@ -85,28 +92,32 @@ def put():
         s.recvrepeat(timeout=1)
 
         # register
-        send_msg(s, '3')
+        send_msg(s, "3")
         send_msg(s, username)
-        if not 'зарегистрированы' in send_msg(password):
+        if not 'зарегистрированы' in send_msg(s, password):
+            print("cannot register")
+            s.close()
             close(CORRUPT)
-
+            
         # login
-        send_msg(s, '2')
+        send_msg(s, "2")
         send_msg(s, username)
         if not 'вошли в систему' in send_msg(s, password):
+            print("cannot login")
+            s.close()
             close(CORRUPT)
-
+            
         try:
-            flight_table = send_msg(s, '1').split('\n\n')[0]
+            flight_table = send_msg(s, "1").split('\n\n')[0]
             flight_notes = flight_table.split('\n')
             
-            rand_flight_note = random.randint(0, len(flight_notes) - 1)
+            rand_flight_note = flight_notes[random.randint(0, len(flight_notes) - 1)]
             flight_id = int(rand_flight_note.strip().split('|')[1].split('-')[1])
-            send_msg(s, '2')
+            send_msg(s, "2")
             send_msg(s, flight_id)
-            send_msg(s, '')
+            send_msg(s, "")
             send_msg(s, flag)
-            send_msg(s, '6')
+            send_msg(s, "6")
             s.close()
         except Exception as e:
             print(str(e))
