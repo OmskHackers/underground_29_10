@@ -24,6 +24,8 @@ CREATE TABLE IF NOT EXISTS therapists (
 CREATE TABLE IF NOT EXISTS patients (
     id INTEGER PRIMARY KEY,
     about_me TEXT NOT NULL,
+    pub_key TEXT NOT NULL,
+    secret TEXT NOT NULL,
     user_id INTEGER NOT NULL,
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
@@ -31,9 +33,10 @@ CREATE TABLE IF NOT EXISTS patients (
 CREATE TABLE IF NOT EXISTS recipes (
     id INTEGER PRIMARY KEY,
     text TEXT NOT NULL,
+    secret TEXT NOT NULL,
     therapist_id INTEGER NOT NULL,
-    pacient_id INTEGER NOT NULL,
+    patient_id INTEGER NOT NULL,
     FOREIGN KEY (therapist_id) REFERENCES therapists(id),
-    FOREIGN KEY (pacient_id) REFERENCES pacients(id)
+    FOREIGN KEY (patient_id) REFERENCES patients(id)
 );
 

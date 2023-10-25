@@ -1,7 +1,7 @@
 import asyncio
 from auth import register, login
 from db import connect_db
-from hihihaha import learn_about_bro, check_recipe, get_list_bro, get_params, write_recipe
+from hihihaha import learn_about_bro, check_recipes, get_list_bro, get_params, write_recipe
 
 
 class GlobalHandler(object):
@@ -33,8 +33,7 @@ class GlobalHandler(object):
         command = args[0]
 
         if command == "register":
-            role = args[1]
-            if role not in ['patient', 'therapist']:
+            if len(args) < 4:
                 self.tx.write("Нужно выбрать одну из ролей\n".encode('utf-8'))
                 return
             await register(self.tx, args)
@@ -62,7 +61,7 @@ class GlobalHandler(object):
             if len(args) != 3:
                 self.tx.write("Укажи свой сессию и позывной братана, чтобы узнать инфу о назначенном лечении\n".encode('utf-8'))
                 return
-            await check_recipe(self.tx, args)
+            await check_recipes(self.tx, args)
 
         elif command == "get_list_bro":
             if len(args) != 2:
