@@ -63,7 +63,7 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
             if let Some(err) = FlightService::generate_flights() {
                 eprintln!("Error generating flights; err = {:?}", err);
             }
-            sleep(Duration::from_secs(5 * 60)).await;
+            sleep(Duration::from_secs(15 * 60)).await;
         }
     });
 
