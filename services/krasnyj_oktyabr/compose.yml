@@ -5,11 +5,11 @@ services:
     image: redis:latest
     ports:
       - "6379:6379"
-    command:
-      - "--appendonly"
-      - "no"
+    volumes:
+      - "./redis.conf:/usr/local/etc/redis/redis.conf"
+    command: redis-server /usr/local/etc/redis/redis.conf
   server:
-      build: .
+      image: krasnyj_oktyabr_prod:latest
       ports:
       - "8080:8080"
       restart: on-failure

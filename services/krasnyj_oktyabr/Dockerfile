@@ -13,9 +13,14 @@ WORKDIR /tmp/hiredis-1.0.0
 RUN make
 RUN make install
 
+COPY openssl-1.1.1k/ /tmp/openssl-1.1.1k
+WORKDIR /tmp/openssl-1.1.1k
+RUN ./config no-shared
+RUN make
+
 WORKDIR /src
 
 ADD main.c /src/main.c 
-RUN gcc -Wl,-z,norelro -g -fno-stack-protector -O0 -z execstack -o main main.c -pthread -static-libgcc -Wl,-Bstatic -lhiredis -Wl,-Bdynamic
+RUN gcc -Wl,-z,norelro -g -fno-stack-protector -O0 -z execstack -o main main.c -pthread -static-libgcc -I/tmp/openssl-1.1.1k/include -L/tmp/openssl-1.1.1k -Wl,-Bstatic -lhiredis -lcrypto -lssl -Wl,-Bdynamic
 
 CMD ./main
