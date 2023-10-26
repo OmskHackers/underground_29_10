@@ -53,7 +53,7 @@ class GlobalHandler(object):
         elif command == "write_recipe":
             if len(args) != 4:
                 self.tx.write(
-                    "Укажи свою сессию, позывной пациента, и что ему хочешь выписать\n".encode('utf-8'))
+                    "Укажи свою сессию, позывной братана, и что ему хочешь выписать\n".encode('utf-8'))
                 return
             await write_recipe(self.tx, args)
 

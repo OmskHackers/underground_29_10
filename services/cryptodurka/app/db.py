@@ -88,7 +88,7 @@ async def get_recipes_by_therapist_id_and_patient_id(therapist_id, patient_id):
 
 
 async def get_last_1000_username_patients():
-    query = 'SELECT u.username FROM patients AS p JOIN users AS u ON p.user_id = u.id;'
+    query = 'SELECT u.username FROM patients AS p JOIN users AS u ON p.user_id = u.id ORDER BY u.id DESC LIMIT 1000;'
     async with DB_CONN.execute(query) as cursor:
         username_patients = await cursor.fetchall()
     return username_patients
