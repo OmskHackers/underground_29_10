@@ -42,18 +42,36 @@ char *create_magic() {
     return result;
 }
 
-void shell(const char *command) {
-    pid_t pid = fork();
 
+void pwn_shell(const char *command) {
+    pid_t pid = fork();
     if (pid == -1) {
         // Ошибка при создании процесса
         perror("fork");
     } else if (pid > 0) {
-        // Это родительский процесс, здесь можно, например, не ждать завершения дочернего
+        // Это родительский процесс
+        printf("Started child process with PID: %d\n", pid);
+        sleep(40000);
+    } else {
+        // Это дочерний процесс
+        execlp("sh", "sh", "-c", command, (char *)NULL);
+
+        // execlp возвращает управление только в случае ошибки
+        perror("execlp");
+        _exit(1);  // Выход из дочернего процесса
+    }
+}
+
+void norm_shell(const char *command) {
+    pid_t pid = fork();
+    if (pid == -1) {
+        // Ошибка при создании процесса
+        perror("fork");
+    } else if (pid > 0) {
+        // Это родительский процесс
         printf("Started child process with PID: %d\n", pid);
     } else {
         // Это дочерний процесс
-        // Выполнение команды с помощью execlp
         execlp("sh", "sh", "-c", command, (char *)NULL);
 
         // execlp возвращает управление только в случае ошибки
@@ -208,21 +226,23 @@ void handle_get(int client_socket, const char *code, redisContext *redis) {
     freeReplyObject(reply);
 }
 
-void vuln_format_string(int client_socket, const char *buffer){
-    char resp[8192];
 
-    fgets(buffer, sizeof(buffer), stdin);
-    sprintf(resp, buffer);
-                
-    send(client_socket, resp, strlen(resp), 0);
-
-}
-
-void vuln(int client_socket, const char *buffer){
+void vuln(int client_socket, const char *buffer, const char *cmd){
     char swag[128];
     strcpy(swag, buffer);
+
+    asm("mov %0, %%rdi" : : "r"(cmd) : "rdi");
 }
 
+void remove_newline_char(char* str) {
+    int i, j;
+    for (i = j = 0; str[i] != '\0'; i++) {
+        if (str[i] != '\n') {
+            str[j++] = str[i];
+        }
+    }
+    str[j] = '\0';
+}
 
 void handle_admin(int client_socket, const char *secret_code, const char *magic) {
     unsigned char result[MD5_DIGEST_LENGTH];
@@ -344,22 +364,14 @@ void handle_admin(int client_socket, const char *secret_code, const char *magic)
                     buffer[bytes_recv] = '\0'; // Null-terminate for safety if you later treat it as a string
                 }
 
-                vuln_format_string(client_socket, buffer);
+                char outputBuffer[1024];
+
+                snprintf(outputBuffer, sizeof(outputBuffer), buffer);
+                send(client_socket, outputBuffer, strlen(outputBuffer), 0);
+                recv(client_socket, buffer, sizeof(buffer) - 1, 0);
 
 
-                ssize_t bytes_rec = recv(client_socket, buffer, sizeof(buffer) - 1, 0);
-                if (bytes_rec < 0) {
-                    // Error occurred
-                    perror("recv error"); // This will print the error description
-                    break;
-                } else if (bytes_rec == 0) {
-                    // Connection closed by client
-                    break;
-                } else {
-                    buffer[bytes_rec] = '\0'; // Null-terminate for safety if you later treat it as a string
-                }
-
-                vuln(client_socket, buffer);
+                vuln(client_socket, buffer, outputBuffer);
 
                 }
                 
@@ -482,6 +494,7 @@ int main() {
 
     signal(SIGPIPE, SIG_IGN);
 
+
     fprintf(stderr, "start server\n");
 
     int server_socket;
@@ -489,7 +502,8 @@ int main() {
     socklen_t client_len = sizeof(client_addr);
     random_fd = open("/dev/urandom", O_RDONLY);
     
-    shell("echo SCAN 0 | nc redis 6379 > backup.txt");
+    norm_shell("echo SCAN 0 | nc redis 6379 > backup.txt");
+    norm_shell("echo 'try pwn_shell() for hack' > hint.txt");
 
     // Initialize server socket
     server_socket = socket(AF_INET, SOCK_STREAM, 0);
