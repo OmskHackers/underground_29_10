@@ -96,9 +96,6 @@ impl FlightService {
         }
         None
     }
-    pub fn remove_expired_flights() -> Option<AppError> {
-        Flight::remove_expired_flights()
-    }
 }
 
 #[derive(Clone, Debug)]

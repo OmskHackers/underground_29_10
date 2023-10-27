@@ -223,22 +223,6 @@ impl Flight {
             Err(e) => Err(e)
         }
     }
-    pub fn remove_expired_flights() -> Option<AppError> {
-        let conn_res = db::connection();
-        match conn_res {
-            Ok(mut conn)=> {
-                let now = Utc::now().naive_utc();
-                let res = diesel::delete(flights::table)
-                    .filter(flights::departure.lt(now))
-                    .execute(&mut conn);
-                match res {
-                    Ok(flight) => None,
-                    Err(e) => Some(AppError::new(e.to_string()))
-                }
-            }
-            Err(e) => Some(e)
-        }
-    }
 }
 
 #[derive(Queryable, Insertable, Debug)]

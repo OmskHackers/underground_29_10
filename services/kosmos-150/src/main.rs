@@ -57,9 +57,6 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     tokio::spawn(async move {
         loop {
-            if let Some(err) = FlightService::remove_expired_flights() {
-                eprintln!("Error removing expired flights; err = {:?}", err);
-            }
             if let Some(err) = FlightService::generate_flights() {
                 eprintln!("Error generating flights; err = {:?}", err);
             }
