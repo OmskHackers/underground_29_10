@@ -1,0 +1,209 @@
+body {
+    width: 80%;
+    margin: 10px auto 20px auto;
+    max-width: 1200px;
+    min-width: 600px;
+}
+
+body * {
+    font-family: font1;
+}
+
+.back-to-site-top,
+.back-to-site-bottom {
+    display: inline-block;
+    font-size: 1.5em;
+    text-decoration: none;
+    color: inherit;
+    border-bottom: 2px solid;
+}
+
+
+.back-to-site-top {
+    margin-bottom: 20px;
+}
+
+.back-to-site-bottom {
+    margin-top: 20px;
+}
+
+.page-title {
+    font-size: 24px;
+    background: gray;
+    color: #ffffff;
+    padding: 5px 0;
+}
+
+.hidden {
+    display: none;
+}
+
+table {
+    width: 100%;
+}
+
+table tr.title {
+    text-align: center;
+    font-size: 18px;
+    background: gray;
+    color: #ffffff;
+    border: 1px solid;
+}
+
+table tr.empty {
+    height: 20px;
+}
+
+table tr.title > td {
+    padding: 5px 0;
+}
+
+table.first-table tr > td:first-child {
+    text-align: right;
+    padding-right: 5px;
+}
+
+table.first-table tr > td:nth-child(2) > * {
+    width: calc(100% - 7px);
+}
+
+table.first-table tr > td:nth-child(2) > select {
+    width: 100%;
+}
+
+table.special-table1 tr > td:first-child {
+    text-align: right;
+    padding-right: 5px;
+    width: 50%;
+}
+
+table.special-table1 tr > td:nth-child(2) {
+    text-align: left;
+}
+
+table.description-table,
+table.roles-table,
+table.mentor-table {
+    margin-top: 45px;
+}
+
+table.description-table tr:nth-child(3) {
+    font-weight: bold;
+}
+
+table.description-table tr:nth-child(n+3),
+table.description-table tr:nth-child(n+3) > td {
+    border: 1px solid;
+}
+
+table.description-table tr:nth-child(n+3) > td:not(:first-child) {
+    /*padding: 0 10px;*/
+    padding: 3px 0;
+}
+
+table.description-table tr:nth-child(n+3) > td:not(:first-child) > *{
+    width: calc(100% - 20px);
+}
+
+table.description-table tr:nth-child(n+3) > td:last-child {
+    width: 270px;
+}
+
+table.roles-table td {
+    text-align: center;
+    vertical-align: middle;
+}
+
+table.roles-table tr:nth-child(3) {
+    font-weight: bold;
+}
+
+table.roles-table tr:nth-child(n+3),
+table.roles-table tr:nth-child(n+3) > td {
+    border: 1px solid;
+}
+
+table.roles-table tr:nth-child(n+3) > td {
+    padding: 3px 0;
+}
+
+table.roles-table tr:nth-child(n+3) > td > *{
+    width: calc(100% - 20px);
+}
+
+table.prerequire-table tr > td:first-child {
+    text-align: center;
+    vertical-align: top;
+    padding: 5px 10px;
+    width: 20%;
+}
+
+table.prerequire-table tr > td:nth-child(2) {
+    text-align: left;
+}
+
+table.prerequire-table tr > td:nth-child(2) > * {
+    width: 100%;
+}
+
+table.mentor-table tr:nth-child(n+4) > td {
+    padding-top: 20px;
+}
+
+table.mentor-table tr:nth-child(3) td:not(:first-child),
+table.mentor-table tr:nth-child(4) td:not(:first-child) {
+    padding-right: 20px;
+}
+
+table.mentor-table tr:nth-child(3) td:first-child > *,
+table.mentor-table tr:nth-child(4) td:first-child > * {
+    width: calc(100% - 20px);
+}
+
+table.mentor-table tr:nth-child(4) td:not(:first-child) > * {
+    width: 100%;
+}
+
+table.mentor-table tr:nth-child(n+5) > td:first-child {
+    text-align: right;
+    padding-right: 10px;
+}
+
+table.mentor-table tr:nth-child(n+5) > td:not(:first-child) > * {
+    width: calc(100% - 20px);
+}
+
+.not-table {
+    display: flex;
+    justify-content: center;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+span.required:after {
+    content: "*";
+    color: red;
+    display: inline-block;
+}
+
+.send-button {
+    margin-top: 100px;
+    width: 100%;
+    text-align: center;
+}
+
+.send-button input[type="button"] {
+    border: none;
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: bold;
+    font-size: 18px;
+    box-shadow: 0 0 3px gray;
+    cursor: pointer;
+}
