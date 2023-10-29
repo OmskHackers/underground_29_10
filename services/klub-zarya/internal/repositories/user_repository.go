@@ -178,10 +178,10 @@ func (r *UserRepository) GetOneByTopicId(topicId int64) (*models.User, error) {
 	return user, nil
 }
 
-func (r *UserRepository) GetUnconfirmedUserFriends(userId int64) ([]string, error) {
-	friends := make([]string, 0)
+func (r *UserRepository) GetUnconfirmedUserFriends(userId int64) ([]int64, error) {
+	friends := make([]int64, 0)
 
-	rows, err := sq.Select("u.username").
+	rows, err := sq.Select("u.id").
 		From("users_friends").
 		LeftJoin("users u ON u.id = friend_id").
 		Where(sq.And{
@@ -194,12 +194,12 @@ func (r *UserRepository) GetUnconfirmedUserFriends(userId int64) ([]string, erro
 		return nil, err
 	}
 	for rows.Next() {
-		var username string
+		var id int64
 
-		if err := rows.Scan(&username); err != nil {
+		if err := rows.Scan(&id); err != nil {
 			return nil, err
 		}
-		friends = append(friends, username)
+		friends = append(friends, id)
 	}
 	return friends, nil
 }

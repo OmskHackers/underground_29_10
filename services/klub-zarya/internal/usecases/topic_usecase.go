@@ -24,8 +24,14 @@ func NewTopicUsecase(log *logrus.Logger, userRepo *repositories.UserRepository, 
 	}
 }
 
-func (u *TopicUsecase) CreateTopic(userId int64, req *dto.CreateTopicRequest) error {
-	return u.topicRepo.CreateOne(userId, req.Theme, req.Description, req.IsPublic)
+func (u *TopicUsecase) CreateTopic(userId int64, req *dto.CreateTopicRequest) (*dto.CreateTopicResponse, error) {
+	id, err := u.topicRepo.CreateOne(userId, req.Theme, req.Description, req.IsPublic)
+	if err != nil {
+		return nil, err
+	}
+	return &dto.CreateTopicResponse{
+		TopicId: id,
+	}, nil
 }
 
 func (u *TopicUsecase) GetUserTopics(userId, targetUserId int64, page uint64) (*dto.GetTopicsResponse, error) {

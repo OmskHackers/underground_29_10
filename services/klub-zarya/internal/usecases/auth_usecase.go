@@ -66,6 +66,7 @@ func (u *AuthUsecase) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	}
 	u.log.Infof("user %s is authenticated", user.Username)
 	return &dto.LoginResponse{
+		UserId: user.ID,
 		Token: token,
 	}, nil
 }

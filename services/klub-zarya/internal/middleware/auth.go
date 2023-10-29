@@ -1,10 +1,11 @@
 package middleware
 
 import (
-	"context"
+	"fmt"
 	"klub-zarya/internal/dto"
 	"klub-zarya/pkg/auth"
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -29,7 +30,7 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		authHeader := strings.Split(c.Request.Header.Get("Authorization"), "Bearer ")
 		if len(authHeader) != 2 {
-			c.JSON(http.StatusUnauthorized, dto.ErrorResponse {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
 				Message: "malformed token",
 			})
 			return
@@ -40,23 +41,21 @@ func (m *Middleware) AuthMiddleware() gin.HandlerFunc {
 
 		if err != nil {
 			m.log.Errorf("[AuthGuard] Error :%s", err.Error())
-			c.JSON(http.StatusUnauthorized, dto.ErrorResponse {
+			c.JSON(http.StatusUnauthorized, dto.ErrorResponse{
 				Message: "unauthorized",
 			})
 			return
 		}
-
-		c.Request = c.Request.WithContext(context.WithValue(c.Request.Context(), auth.UserContextKey, claims.UserID))
+		c.AddParam("userId", fmt.Sprint(claims.UserID))
 		c.Next()
 	}
 }
 
-func GetUserIdFromContext(c *gin.Context) int64 {
-	claims, ok := c.Request.Context().Value(auth.UserContextKey).(auth.AccessClaims)
-
-	if !ok {
+func GetUserId(c *gin.Context) int64 {
+	userId, err := strconv.ParseInt(c.Param("userId"), 10, 64)
+	if err != nil {
 		return 0
 	}
 
-	return claims.UserID
+	return userId
 }

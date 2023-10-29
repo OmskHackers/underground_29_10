@@ -62,9 +62,9 @@ func (s Server) Login(c *gin.Context) {
 }
 
 func (s Server) CreateFriendRequest(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
-	targetUserId, err := strconv.ParseInt(c.Param("targetUserId"), 10, 64)
+	targetUserId, err := strconv.ParseInt(c.Query("targetUserId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Message: err.Error(),
@@ -88,7 +88,7 @@ func (s Server) CreateFriendRequest(c *gin.Context) {
 }
 
 func (s Server) GetUserFriends(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	page, err := strconv.ParseUint(c.Query("page"), 10, 64)
 	if err != nil {
@@ -109,7 +109,7 @@ func (s Server) GetUserFriends(c *gin.Context) {
 }
 
 func (s Server) GetUserFriendRequests(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	res, err := s.usecase.User.GetUserFriendRequests(userId)
 	if err != nil {
@@ -122,8 +122,8 @@ func (s Server) GetUserFriendRequests(c *gin.Context) {
 }
 
 func (s Server) AcceptFriendRequest(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
-	
+	userId := middleware.GetUserId(c)
+
 	targetUserId, err := strconv.ParseInt(c.Param("targetUserId"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
@@ -142,7 +142,7 @@ func (s Server) AcceptFriendRequest(c *gin.Context) {
 }
 
 func (s Server) CreateTopic(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	var request dto.CreateTopicRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&request); err != nil {
@@ -152,17 +152,18 @@ func (s Server) CreateTopic(c *gin.Context) {
 		return
 	}
 
-	if err := s.usecase.Topic.CreateTopic(userId, &request); err != nil {
+	res, err := s.usecase.Topic.CreateTopic(userId, &request)
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
 			Message: err.Error(),
 		})
 		return
 	}
-	c.JSON(http.StatusCreated, nil)
+	c.JSON(http.StatusCreated, res)
 }
 
 func (s Server) GetUserTopics(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	targetUserId, err := strconv.ParseInt(c.Param("targetUserId"), 10, 64)
 	if err != nil {
@@ -203,7 +204,7 @@ func (s Server) GetTopics(c *gin.Context) {
 		})
 		return
 	}
-	
+
 	res, err := s.usecase.Topic.GetPublicTopics(page)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
@@ -215,7 +216,7 @@ func (s Server) GetTopics(c *gin.Context) {
 }
 
 func (s Server) PostComment(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	var request dto.PostCommentRequest
 	if err := json.NewDecoder(c.Request.Body).Decode(&request); err != nil {
@@ -241,7 +242,7 @@ func (s Server) PostComment(c *gin.Context) {
 }
 
 func (s Server) GetTopicComments(c *gin.Context) {
-	userId := middleware.GetUserIdFromContext(c)
+	userId := middleware.GetUserId(c)
 
 	topicId, err := strconv.ParseInt(c.Param("topicId"), 10, 64)
 	if err != nil {

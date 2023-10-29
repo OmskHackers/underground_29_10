@@ -27,9 +27,9 @@ func (u *UserUsecase) GetUserFriends(userId int64, page uint64) (*dto.GetFriends
 		return nil, err
 	}
 
-	friendsUsernames := make([]string, 0, len(friends))
+	friendsUsernames := make([]int64, 0, len(friends))
 	for _, friend := range friends {
-		friendsUsernames = append(friendsUsernames, friend.Username)
+		friendsUsernames = append(friendsUsernames, friend.ID)
 	}
 
 	return &dto.GetFriendsResponse{

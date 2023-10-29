@@ -15,14 +15,17 @@ func NewTopicRepository(conn *sql.DB) *TopicRepository {
 	return &TopicRepository{conn: conn}
 }
 
-func (r *TopicRepository) CreateOne(userId int64, theme, description string, isPublic bool) error {
-	_, err := sq.Insert("topics").
+func (r *TopicRepository) CreateOne(userId int64, theme, description string, isPublic bool) (int64, error) {
+	res, err := sq.Insert("topics").
 		Columns("theme", "author_id", "description", "is_public").
 		Values(theme, userId, description, isPublic).
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.conn).
 		Exec()
-	return err
+	if err != nil {
+		return 0, err
+	}
+	return res.LastInsertId()
 }
 
 func (r *TopicRepository) GetManyByUser(userId int64, paginationIndex uint64) ([]*models.Topic, error) {

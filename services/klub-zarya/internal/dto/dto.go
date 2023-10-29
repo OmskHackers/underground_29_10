@@ -10,11 +10,12 @@ type RegisterRequest struct {
 type LoginRequest = RegisterRequest
 
 type LoginResponse struct {
+	UserId int64 `json:"userId"`
 	Token string `json:"token"`
 }
 
 type GetFriendsResponse struct {
-	Friends []string `json:"friends"`
+	Friends []int64 `json:"friends"`
 }
 
 type GetFriendsRequestsResponse = GetFriendsResponse
@@ -23,6 +24,10 @@ type CreateTopicRequest struct {
 	Theme       string `json:"theme"`
 	Description string `json:"description"`
 	IsPublic    bool   `json:"isPublic"`
+}
+
+type CreateTopicResponse struct {
+	TopicId int64 `json:"topicId"`
 }
 
 type GetTopicsResponse struct {
