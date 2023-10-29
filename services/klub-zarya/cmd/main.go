@@ -51,6 +51,7 @@ func main() {
 	public.POST("/login", web.Login)
 	public.POST("/register", web.Register)
 	public.GET("/topics", web.GetTopics)
+	public.GET("/users", web.GetUsers)
 
 	private := web.Router.Group("/")
 	private.Use(authGuard.AuthMiddleware())

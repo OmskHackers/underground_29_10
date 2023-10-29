@@ -9,7 +9,6 @@ import (
 
 type AccessClaims struct {
 	UserID             int64  `json:"userId"`
-	Token              string `json:"token"`
 	jwt.StandardClaims `json:"claims"`
 }
 

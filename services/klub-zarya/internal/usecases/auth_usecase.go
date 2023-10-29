@@ -48,7 +48,7 @@ func (u *AuthUsecase) Register(req *dto.RegisterRequest) error {
 func (u *AuthUsecase) Login(req *dto.LoginRequest) (*dto.LoginResponse, error) {
 	user, err := u.userRepo.GetOneByUsername(req.Username)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if strings.Contains(err.Error(), "no rows") {
 			return nil, models.ErrWrongCredentials
 		}
 		return nil, err

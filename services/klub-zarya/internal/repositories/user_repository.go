@@ -203,3 +203,25 @@ func (r *UserRepository) GetUnconfirmedUserFriends(userId int64) ([]int64, error
 	}
 	return friends, nil
 }
+
+func (r *UserRepository) GetMany() ([]*models.User, error) {
+	users := make([]*models.User, 0)
+
+	rows, err := sq.Select("id", "username").
+		From("users").
+		RunWith(r.conn).
+		OrderBy("id DESC").
+		Query()
+	if err != nil {
+		return nil, err
+	}
+	for rows.Next() {
+		user := &models.User{}
+
+		if err := rows.Scan(&user.ID, &user.Username); err != nil {
+			return nil, err
+		}
+		users = append(users, user)
+	}
+	return users, nil
+}

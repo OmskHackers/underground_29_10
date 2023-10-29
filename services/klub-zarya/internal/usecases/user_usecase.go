@@ -60,10 +60,20 @@ func (u *UserUsecase) CreateFriendRequest(userId, targetUserId int64) error {
 func (u *UserUsecase) AcceptFriendRequest(userId, fromUserId int64) error {
 	_, err := u.userRepo.GetUnconfirmedUserFriends(userId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if strings.Contains(err.Error(), "no rows") {
 			return models.ErrFriendsRequestsNotFound
 		}
 		return err
 	}
 	return u.userRepo.UpdateUserFriend(userId, fromUserId)
+}
+
+func (u *UserUsecase) GetUsers() (*dto.GetUsersResponse, error) {
+	users, err := u.userRepo.GetMany()
+	if err != nil {
+		return nil, err
+	}
+	return &dto.GetUsersResponse{
+		Users: users,
+	}, nil
 }

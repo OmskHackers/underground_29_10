@@ -37,7 +37,6 @@ func (j *JwtAuthenticator) ParseAccessToken(jwtToken string) (*AccessClaims, err
 	}
 
 	if claims, ok := token.Claims.(*AccessClaims); ok && token.Valid {
-		claims.Token = jwtToken
 		return claims, nil
 	}
 	return nil, err

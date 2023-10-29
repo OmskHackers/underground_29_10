@@ -2,10 +2,9 @@
 from transliterate import translit
 from faker import Faker
 import random
+import string
 import requests
 import sys
-
-context.log_level = 'error'
 
 user = Faker(locale='ru_RU')
 
@@ -15,7 +14,7 @@ topics = [
     'Летов реально в тайге?', 
     'Пластмассовый мир не победит',
     'Погода на Марсе',
-    'Как собрать квантовый генератор в домашних условиях',
+    'Как собрать квантовый генератор',
     'Как сделать радиоактивный чайный гриб',
     'Что такое жвачка? Капиталистическая фигня',
     'Когда США наконец развалится? Устал ждать...',
@@ -42,6 +41,7 @@ cmd = sys.argv[1]
 
 def check():
     ip = sys.argv[2]
+    url = f'http://{ip}:{port}'
     try:
         requests.get(url + '/topics?page=0')
         close(OK)
@@ -54,6 +54,7 @@ def get():
     flag_id = sys.argv[3] 
     flag = sys.argv[4]
 
+    url = f'http://{ip}:{port}'
     creds = flag_id.split(':')
     username = creds[0]
     password = creds[1]
@@ -71,9 +72,9 @@ def get():
             close(CORRUPT)
         
         token = res.json()['token']
-        user_id = res.json()['user_id']
+        user_id = res.json()['userId']
 
-        res = s.get(url + '/friends', headers={
+        res = s.get(url + '/friends?page=0', headers={
             'Authorization': 'Bearer ' + token
         })
         if 'message' in res.text:
@@ -90,7 +91,7 @@ def get():
                 print(res.text)
                 close(CORRUPT)
 
-        res = s.get(url + f'/topics/{user_id}', headers={
+        res = s.get(url + f'/topics/{user_id}?page=0', headers={
             'Authorization': 'Bearer ' + token
         })
         if 'message' in res.text:
@@ -103,19 +104,6 @@ def get():
                 s.close()
                 print('flag not found in topic')
                 close(CORRUPT)
-            topic_id = topic['id']
-            res = s.get(url + f'/comments/{topic_id}', headers={
-                'Authorization': 'Bearer ' + token
-            })
-            if 'message' in res.text:
-                s.close()
-                print(res.text)
-                close(CORRUPT)
-
-            if not flag in res.json()['comments'][0]['text']:
-                s.close()
-                print('flag not found in comment')
-                close(CORRUPT)
 
         s.close()
         close(OK)
@@ -125,6 +113,7 @@ def get():
 
 def put():
     ip = sys.argv[2]
+    url = f'http://{ip}:{port}'
 
     username = gen_user()
     password = generator()
@@ -144,17 +133,29 @@ def put():
             print(res.text)
             close(CORRUPT)
 
+        res = s.get(url + '/users')
+        if 'message' in res.text:
+            s.close()
+            print(res.text)
+            close(CORRUPT)
+
+        if not username in res.text:
+            s.close()
+            print('user not found in /users')
+            close(CORRUPT)
+
         res = s.post(url + '/login', json={
             'username': username,
             'password': password
         })
+        
         if 'message' in res.text:
             s.close()
             print(res.text)
             close(CORRUPT)
         
         token = res.json()['token']
-        user_id = res.json()['user_id']
+        user_id = res.json()['userId']
 
         if user_id > 1:
             res = s.post(url + f'/friends?targetUserId={user_id - 1}', headers={
@@ -169,20 +170,8 @@ def put():
             'Authorization': 'Bearer ' + token
         }, json={
             'theme': topics[random.randint(0, len(topics) - 1)],
-            'description': flag
-        })
-        if 'message' in res.text:
-            s.close()
-            print(res.text)
-            close(CORRUPT)
-
-        topic_id = res.json()['topicId']
-
-        res = s.post(url + f'/comments', headers={
-            'Authorization': 'Bearer ' + token
-        }, json={
-            'topicId': topic_id,
-            'text': flag
+            'description': flag,
+            'isPublic': False
         })
         if 'message' in res.text:
             s.close()

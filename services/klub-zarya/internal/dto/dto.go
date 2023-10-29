@@ -43,6 +43,10 @@ type GetTopicCommentsResponse struct {
 	Comments []*models.Comment `json:"comments"`
 }
 
+type GetUsersResponse struct {
+	Users []*models.User `json:"users"`
+}
+
 type ErrorResponse struct {
 	Message string `json:"message"`
 }

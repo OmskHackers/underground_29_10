@@ -16,16 +16,18 @@ func NewTopicRepository(conn *sql.DB) *TopicRepository {
 }
 
 func (r *TopicRepository) CreateOne(userId int64, theme, description string, isPublic bool) (int64, error) {
-	res, err := sq.Insert("topics").
+	var id int64
+	row := sq.Insert("topics").
 		Columns("theme", "author_id", "description", "is_public").
 		Values(theme, userId, description, isPublic).
+		Suffix("returning id").
 		PlaceholderFormat(sq.Dollar).
 		RunWith(r.conn).
-		Exec()
-	if err != nil {
+		QueryRow()
+	if err := row.Scan(&id); err != nil {
 		return 0, err
 	}
-	return res.LastInsertId()
+	return id, nil
 }
 
 func (r *TopicRepository) GetManyByUser(userId int64, paginationIndex uint64) ([]*models.Topic, error) {

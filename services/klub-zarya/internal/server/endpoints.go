@@ -274,3 +274,14 @@ func (s Server) GetTopicComments(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, res)
 }
+
+func (s Server) GetUsers(c *gin.Context) {
+	res, err := s.usecase.User.GetUsers()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, dto.ErrorResponse{
+			Message: err.Error(),
+		})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}

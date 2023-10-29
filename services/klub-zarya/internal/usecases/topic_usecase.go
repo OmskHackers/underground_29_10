@@ -40,13 +40,14 @@ func (u *TopicUsecase) GetUserTopics(userId, targetUserId int64, page uint64) (*
 	if userId != targetUserId {
 		_, err := u.userRepo.GetUserFriendById(targetUserId, userId)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if strings.Contains(err.Error(), "no rows") {
 				hasPrivateAccess = false
 			} else {
 				return nil, err
 			}
 		}
 	}
+	fmt.Println(hasPrivateAccess)
 
 	topics, err := u.topicRepo.GetManyByUser(targetUserId, page)
 	if err != nil {

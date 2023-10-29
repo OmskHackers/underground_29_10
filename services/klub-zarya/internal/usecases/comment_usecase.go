@@ -25,7 +25,7 @@ func NewCommentUsecase(log *logrus.Logger, commentRepo *repositories.CommentRepo
 func (u *CommentUsecase) PostComment(userId int64, req *dto.PostCommentRequest) error {
 	topicAuthor, err := u.userRepo.GetOneByTopicId(req.TopicId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if strings.Contains(err.Error(), "no rows") {
 			return models.ErrUserNotFound
 		}
 	}
@@ -33,7 +33,7 @@ func (u *CommentUsecase) PostComment(userId int64, req *dto.PostCommentRequest) 
 	if userId != topicAuthor.ID {
 		_, err := u.userRepo.GetUserFriendById(topicAuthor.ID, userId)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if strings.Contains(err.Error(), "no rows") {
 				hasPrivateAccess = false
 			} else {
 				return err
@@ -50,7 +50,7 @@ func (u *CommentUsecase) PostComment(userId int64, req *dto.PostCommentRequest) 
 func (u *CommentUsecase) GetTopicComments(userId, topicId int64, page uint64) (*dto.GetTopicCommentsResponse, error) {
 	topicAuthor, err := u.userRepo.GetOneByTopicId(topicId)
 	if err != nil {
-		if strings.Contains(err.Error(), "not found") {
+		if strings.Contains(err.Error(), "no rows") {
 			return nil, models.ErrUserNotFound
 		}
 	}
@@ -58,7 +58,7 @@ func (u *CommentUsecase) GetTopicComments(userId, topicId int64, page uint64) (*
 	if userId != topicAuthor.ID {
 		_, err := u.userRepo.GetUserFriendById(topicAuthor.ID, userId)
 		if err != nil {
-			if strings.Contains(err.Error(), "not found") {
+			if strings.Contains(err.Error(), "no rows") {
 				hasPrivateAccess = false
 			} else {
 				return nil, err
