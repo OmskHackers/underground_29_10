@@ -5,7 +5,7 @@ _connection = None
 def _getConnection() -> sqlite3.Connection: 
     global _connection
     if not _connection:
-        _connection = sqlite3.connect('zapiski.db')
+        _connection = sqlite3.connect('data/sqlite.db')
         _connection.row_factory = sqlite3.Row
     return _connection # maybe this could cause collisions
 

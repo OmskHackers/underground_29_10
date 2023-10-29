@@ -60,7 +60,6 @@ def index():
 
 @app.route('/view', methods=['GET'])
 def view():
-    # print(f"Viewing message with id {id} with key {key}")
     form = ViewForm()
     messageId = request.args.get('id')
     key = request.args.get('key')
@@ -86,4 +85,8 @@ def view():
                 # form.message.data = message
     if form.validate_on_submit():
         return redirect(url_for('view', id=messageId, key=key))
+        
+
+if __name__ == "__main__":
+    app.run(host='0.0.0.0', port=7777)
 
