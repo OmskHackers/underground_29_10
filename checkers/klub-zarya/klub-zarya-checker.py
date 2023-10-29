@@ -43,8 +43,7 @@ cmd = sys.argv[1]
 def check():
     ip = sys.argv[2]
     try:
-        s = remote(ip, port, timeout=5)
-        s.close()
+        requests.get(url + '/topics?page=0')
         close(OK)
     except Exception as e:
         print(str(e))
