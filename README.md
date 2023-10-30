@@ -3,8 +3,7 @@ Repository contains source code of services, checkers and sploits.
 
 ## Results
 
-Coming...
-
+![Скорборд](board.png)
 
 ## Services
 
