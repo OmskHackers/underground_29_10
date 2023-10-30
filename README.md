@@ -23,4 +23,4 @@ Repository contains source code of services, checkers and sploits.
 
 ## Writeups
 
-Coming...
+ну типа чекайте сплойты)
